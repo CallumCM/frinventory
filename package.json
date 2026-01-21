@@ -7,6 +7,8 @@
 		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
 	},
 	"dependencies": {
+		"@twind/core": "^1.1.3",
+		"@twind/preset-tailwind": "^1.1.4",
 		"hono": "^4.11.4"
 	},
 	"devDependencies": {

@@ -1,0 +1,22 @@
+-- Users table since we don't need super secure authentication
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+-- THE frinventory
+CREATE TABLE IF NOT EXISTS inventory (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  quantity TEXT NOT NULL,
+  location TEXT NOT NULL CHECK(location IN ('fridge', 'freezer', 'pantry')),
+  expiry TEXT NOT NULL,
+  added_by TEXT NOT NULL,
+  added_at TEXT DEFAULT (datetime('now'))
+);
+
+-- Us
+INSERT OR IGNORE INTO users (name) VALUES ('Callum');
+INSERT OR IGNORE INTO users (name) VALUES ('Raja');
+INSERT OR IGNORE INTO users (name) VALUES ('Jack');

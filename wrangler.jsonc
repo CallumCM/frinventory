@@ -13,7 +13,20 @@
 	},
 	"observability": {
 		"enabled": true
-	}
+	},
+	"routes": [
+		{
+			"pattern": "frinventory.geekveggie.dev",
+			"custom_domain": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "fridge_db",
+			"database_name": "fridge-db",
+			"database_id": "56fab62d-eec2-40a8-93de-790ec93b638a"
+		}
+	]
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement

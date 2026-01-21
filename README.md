@@ -1,21 +1,36 @@
-```txt
-npm install
-npm run dev
-```
+# Frinventory
 
-```txt
-npm run deploy
-```
+A minimalist PWA for tracking fridge inventory with roommates.
 
-[For generating/synchronizing types based on your Worker configuration run](https://developers.cloudflare.com/workers/wrangler/commands/#types):
+## Setup
 
-```txt
-npm run cf-typegen
-```
+1. **Initialize the database:**
+   ```bash
+   wrangler d1 execute fridge-db --local --file=./schema.sql
+   ```
 
-Pass the `CloudflareBindings` as generics when instantiation `Hono`:
+2. **Run locally:**
+   ```bash
+   npm run dev
+   ```
 
-```ts
-// src/index.ts
-const app = new Hono<{ Bindings: CloudflareBindings }>()
-```
+3. **Deploy:**
+   ```bash
+   npm run deploy
+   ```
+
+## Features
+
+- Simple name-based authentication (Callum, Raja, Jack)
+- Three storage locations: Fridge, Freezer, Pantry
+- Quick-add buttons for common items
+- Custom item entry with auto-expiry calculation
+- PWA support for mobile installation
+- Minimalist Times New Roman design
+
+## Usage
+
+- Select your name on first visit
+- Switch between Fridge/Freezer/Pantry tabs
+- Click "Add Item" to add inventory
+- Quick add common items or enter custom format: "Item name, quantity, X days"
