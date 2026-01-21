@@ -4,6 +4,7 @@ import { cors } from 'hono/cors'
 import type { AppContext } from './types'
 import pages from './routes/pages'
 import api from './routes/api'
+import './twind'
 
 // Main Hono app instance
 const app = new Hono<AppContext>()
