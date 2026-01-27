@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { AppContext } from '../types'
 import { Layout } from '../components/layout'
-import { HomePage } from '../components/pages'
+import { HomePage, InventoryPage, AddItemPage, UsersPage } from '../components/pages'
 
 // Create a new Hono instance for page routes
 // The <AppContext> generic provides type safety for c.env bindings
@@ -14,38 +14,43 @@ const pages = new Hono<AppContext>()
 // - c.json(): returns JSON response
 // - c.redirect(): redirects to another URL
 pages.get('/', (c) => {
-	return c.html(Layout({ title: 'Frinventory', children: HomePage() }))
+	// Redirect to inventory page with default location
+	return c.redirect('/inventory?location=fridge')
 })
 
 pages.get('/inventory', async (c) => {
-	// D1 queries use a prepare/bind/execute pattern:
-	// 1. prepare() - create SQL statement
-	// 2. bind() - safely bind parameters (prevents SQL injection)
-	// 3. all() - execute and get all results
-	// 4. first() - execute and get first result only
-	// 5. run() - execute without returning results
+	const location = (c.req.query('location') || 'fridge') as 'fridge' | 'freezer' | 'pantry'
+	
+	if (!['fridge', 'freezer', 'pantry'].includes(location)) {
+		return c.redirect('/inventory?location=fridge')
+	}
+	
+	// D1 queries are prepared, then bound to parameters (to prevent SQL injection n stuff), then executed
+	// .all() returns all results, .first() returns first result only
 	const { results } = await c.env.fridge_db
-		.prepare('SELECT * FROM inventory ORDER BY added_at DESC')
+		.prepare('SELECT * FROM inventory WHERE location = ? ORDER BY expiry ASC')
+		.bind(location)
 		.all()
 
-	return c.html(Layout({ title: 'Inventory', children: '' }))
+	return c.html(Layout({ 
+		title: `${location.charAt(0).toUpperCase() + location.slice(1)} - Frinventory`, 
+		children: InventoryPage({ items: results as any, location }) 
+	}))
 })
 
 pages.get('/users', async (c) => {
 	const { results } = await c.env.fridge_db.prepare('SELECT * FROM users').all()
 
-	return c.html(Layout({ title: 'Users', children: '' }))
+	return c.html(Layout({ title: 'Users', children: UsersPage({ users: results as any }) }))
 })
 
 pages.get('/add', async (c) => {
-	const { results: users } = await c.env.fridge_db.prepare('SELECT name FROM users').all()
+	const { results: users } = await c.env.fridge_db.prepare('SELECT * FROM users').all()
 
-	return c.html(Layout({ title: 'Add Item', children: '' }))
+	return c.html(Layout({ title: 'Add Item', children: AddItemPage({ users: users as any }) }))
 })
 
 pages.post('/add', async (c) => {
-	// c.req.formData() parses form submissions (Content-Type: application/x-www-form-urlencoded)
-	// For JSON, use c.req.json() instead
 	const formData = await c.req.formData()
 	const name = formData.get('name')
 	const quantity = formData.get('quantity')
@@ -53,9 +58,6 @@ pages.post('/add', async (c) => {
 	const expiry = formData.get('expiry')
 	const added_by = formData.get('added_by')
 
-	// Use bind() to safely insert variables into SQL
-	// The ? placeholders are replaced with bound values in order
-	// run() executes the query without returning data
 	await c.env.fridge_db
 		.prepare(
 			'INSERT INTO inventory (name, quantity, location, expiry, added_by) VALUES (?, ?, ?, ?, ?)'
@@ -63,8 +65,7 @@ pages.post('/add', async (c) => {
 		.bind(name, quantity, location, expiry, added_by)
 		.run()
 
-	// c.redirect() returns a 302 redirect response
-	return c.redirect('/inventory')
+	return c.redirect(`/inventory?location=${location}`)
 })
 
 export default pages

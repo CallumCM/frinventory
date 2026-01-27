@@ -1,47 +1,316 @@
 import { html } from 'hono/html'
 
+interface InventoryItem {
+  id: number
+  name: string
+  quantity: string
+  location: 'fridge' | 'freezer' | 'pantry'
+  expiry: string
+  added_by: string
+  added_at: string
+}
+
+interface User {
+  id: number
+  name: string
+  created_at: string
+}
+
+const getDaysUntilExpiry = (expiryDate: string): number => {
+  const today = new Date()
+  const expiry = new Date(expiryDate)
+  const diffTime = expiry.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  return diffDays
+}
+
+const getExpiryColor = (days: number): string => {
+  if (days <= 0) return 'text-red-500'
+  if (days <= 3) return 'text-orange-400'
+  if (days <= 7) return 'text-yellow-400'
+  return 'text-emerald-400'
+}
+
+const getFoodEmoji = (name: string): string => {
+  const lower = name.toLowerCase()
+  const emojiMap: Record<string, string> = {
+    milk: '🥛', cheese: '🧀', yogurt: '🥛', butter: '🧈',
+    egg: '🥚', eggs: '🥚', chicken: '🍗', beef: '🥩', pork: '🥓',
+    fish: '🐟', salmon: '🐟', shrimp: '🦐',
+    apple: '🍎', banana: '🍌', orange: '🍊', lemon: '🍋',
+    grape: '🍇', strawberry: '🍓', berry: '🫐', melon: '🍈',
+    carrot: '🥕', broccoli: '🥦', lettuce: '🥬', tomato: '🍅',
+    potato: '🥔', onion: '🧅', garlic: '🧄', corn: '🌽',
+    bread: '🍞', rice: '🍚', pasta: '🍝', noodle: '🍜',
+    pizza: '🍕', soup: '🍲', salad: '🥗', sandwich: '🥪',
+    cake: '🍰', 'ice cream': '🍦', chocolate: '🍫', cookie: '🍪',
+    juice: '🧃', soda: '🥤', water: '💧', wine: '🍷', beer: '🍺',
+    cream: '🥛', sour: '🥛', leftovers: '🍱', sauce: '🫙',
+  }
+  
+  for (const [key, emoji] of Object.entries(emojiMap)) {
+    if (lower.includes(key)) return emoji
+  }
+  return '🍽️'
+}
+
 export const HomePage = () => html`
-<div class="font-serif max-w-[428px] mx-auto px-4 py-4 flex flex-col min-h-screen bg-0k text-5000k">
-  <!-- Search Bar -->
-  <div class="bg-dark-1 border-2 border-1700k rounded-3xl px-5 py-3 mb-4 flex items-center justify-center">
-    <span class="text-5000k text-xl font-bold">Q</span>
-  </div>
+  <div class="font-serif min-h-screen bg-slate-900 text-slate-100">
+    <div class="max-w-md mx-auto px-4 py-6">
+      <header class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-cyan-400">Frinventory</h1>
+        <p class="text-slate-400 text-sm mt-1">Track your food, reduce waste</p>
+      </header>
 
-  <!-- Tabs -->
-  <div class="flex gap-2 mb-6 border-2 border-1700k rounded-[32px] p-1 bg-dark-1">
-    <div class="flex-1 px-4 py-3 rounded-[28px] text-center cursor-pointer text-base font-bold transition-all bg-1700k text-0k">
-      Fridge
-    </div>
-    <div class="flex-1 px-4 py-3 rounded-[28px] text-center cursor-pointer text-base font-bold transition-all bg-transparent text-5000k">
-      Freezer
-    </div>
-    <div class="flex-1 px-4 py-3 rounded-[28px] text-center cursor-pointer text-base font-bold transition-all bg-transparent text-5000k">
-      Pantry
-    </div>
-  </div>
-
-  <!-- Items Grid -->
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6 flex-1">
-    <!-- Filled Item Card -->
-    <div class="bg-dark-1 border-2 border-1700k rounded-[20px] aspect-square p-4 flex flex-col items-center justify-center gap-2 relative">
-      <div class="absolute top-3 left-3 text-sm text-5000k">@ 3 days</div>
-      <div class="w-[60px] h-[60px] border-2 border-5000k rounded-full flex items-center justify-center bg-dark-2">
-        <span class="text-lg font-bold text-5000k">Soul</span>
+      <div class="flex justify-center mb-6">
+        <a href="/inventory?location=fridge" 
+           class="px-6 py-2 rounded-l-full bg-cyan-600 text-white font-medium border-2 border-cyan-500">
+          Fridge
+        </a>
+        <a href="/inventory?location=freezer"
+           class="px-6 py-2 bg-slate-700 text-slate-300 border-y-2 border-slate-600 hover:bg-slate-600">
+          Freezer
+        </a>
+        <a href="/inventory?location=pantry"
+           class="px-6 py-2 rounded-r-full bg-slate-700 text-slate-300 border-2 border-slate-600 hover:bg-slate-600">
+          Pantry
+        </a>
       </div>
-      <div class="text-base text-5000k italic">Eat</div>
+
+      <div class="text-center py-16">
+        <p class="text-6xl mb-4">🧊</p>
+        <p class="text-slate-400 text-lg">Your inventory is empty</p>
+        <p class="text-slate-500 text-sm mt-2">Add items to start tracking</p>
+      </div>
+
+      <a href="/add" 
+         class="fixed bottom-6 left-1/2 -translate-x-1/2 px-12 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full shadow-lg shadow-cyan-900/50 transition-colors">
+        Add Item
+      </a>
     </div>
-
-    <!-- Empty Cards -->
-    <div class="bg-dark-1 border-2 border-1700k rounded-[20px] aspect-square"></div>
-    <div class="bg-dark-1 border-2 border-1700k rounded-[20px] aspect-square"></div>
-    <div class="bg-dark-1 border-2 border-1700k rounded-[20px] aspect-square"></div>
-    <div class="bg-dark-1 border-2 border-1700k rounded-[20px] aspect-square"></div>
-    <div class="bg-dark-1 border-2 border-1700k rounded-[20px] aspect-square"></div>
   </div>
-
-  <!-- Add Item Button -->
-  <div class="bg-dark-1 border-3 border-1700k rounded-[28px] px-5 py-5 text-center text-2xl font-bold text-5000k cursor-pointer transition-all hover:bg-1700k hover:text-0k mt-auto">
-    Add Item
-  </div>
-</div>
 `
+
+export const InventoryPage = (props: { 
+  items: InventoryItem[], 
+  location: 'fridge' | 'freezer' | 'pantry' 
+}) => {
+  const { items, location } = props
+  
+  const locationEmoji = {
+    fridge: '🧊',
+    freezer: '❄️',
+    pantry: '🗄️'
+  }
+
+  const tabs = ['fridge', 'freezer', 'pantry'] as const
+  
+  return html`
+    <div class="font-serif min-h-screen bg-slate-900 text-slate-100 pb-24">
+      <div class="max-w-md mx-auto px-4 py-6">
+        <header class="text-center mb-6">
+          <h1 class="text-3xl font-bold text-cyan-400">Frinventory</h1>
+          <p class="text-slate-400 text-sm mt-1">Track your food, reduce waste</p>
+        </header>
+
+        <div class="flex justify-center mb-6">
+          ${tabs.map((tab, i) => {
+            const isActive = tab === location
+            const isFirst = i === 0
+            const isLast = i === tabs.length - 1
+            const roundedClass = isFirst ? 'rounded-l-full' : isLast ? 'rounded-r-full' : ''
+            const activeClass = isActive 
+              ? 'bg-cyan-600 text-white border-cyan-500' 
+              : 'bg-slate-700 text-slate-300 border-slate-600 hover:bg-slate-600'
+            const borderClass = isFirst ? 'border-2' : isLast ? 'border-2' : 'border-y-2'
+            
+            return html`
+              <a href="/inventory?location=${tab}" 
+                 class="px-5 py-2 font-medium capitalize ${roundedClass} ${activeClass} ${borderClass}">
+                ${tab}
+              </a>
+            `
+          })}
+        </div>
+
+        ${items.length === 0 ? html`
+          <div class="text-center py-16">
+            <p class="text-6xl mb-4">${locationEmoji[location]}</p>
+            <p class="text-slate-400 text-lg">Your ${location} is empty</p>
+            <p class="text-slate-500 text-sm mt-2">Add items to start tracking</p>
+          </div>
+        ` : html`
+          <div class="grid grid-cols-2 gap-4">
+            ${items.map(item => {
+              const days = getDaysUntilExpiry(item.expiry)
+              const expiryColor = getExpiryColor(days)
+              const emoji = getFoodEmoji(item.name)
+              const daysText = days <= 0 ? 'Expired!' : days === 1 ? '1 day' : `${days} days`
+              
+              return html`
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-lg">
+                  <div class="flex items-center gap-1 mb-2 ${expiryColor}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                      <path stroke-width="2" d="M12 6v6l4 2"/>
+                    </svg>
+                    <span class="text-sm font-medium">${daysText}</span>
+                  </div>
+                  
+                  <div class="text-5xl text-center my-3">
+                    ${emoji}
+                  </div>
+                  
+                  <p class="text-center font-medium text-slate-100 truncate">${item.name}</p>
+                  <p class="text-center text-xs text-slate-400">${item.quantity}</p>
+                  
+                  <form action="/api/eat/${item.id}" method="POST" class="mt-3">
+                    <button type="submit" 
+                            class="w-full py-1.5 bg-teal-600 hover:bg-teal-500 text-white text-sm font-medium rounded-lg transition-colors">
+                      Eat
+                    </button>
+                  </form>
+                </div>
+              `
+            })}
+          </div>
+        `}
+
+        <a href="/add" 
+           class="fixed bottom-6 left-1/2 -translate-x-1/2 px-12 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full shadow-lg shadow-cyan-900/50 transition-colors">
+          Add Item
+        </a>
+      </div>
+    </div>
+  `
+}
+
+// Add item form page
+export const AddItemPage = (props: { users: User[] }) => {
+  const { users } = props
+  
+  // Default expiry to 7 days from now
+  const defaultExpiry = new Date()
+  defaultExpiry.setDate(defaultExpiry.getDate() + 7)
+  const defaultExpiryStr = defaultExpiry.toISOString().split('T')[0]
+  
+  return html`
+    <div class="font-serif min-h-screen bg-slate-900 text-slate-100">
+      <div class="max-w-md mx-auto px-4 py-6">
+        <header class="flex items-center gap-4 mb-8">
+          <a href="/inventory" class="text-slate-400 hover:text-slate-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </a>
+          <h1 class="text-2xl font-bold text-cyan-400">Add Item</h1>
+        </header>
+
+        <form action="/add" method="POST" class="space-y-6">
+          <div>
+            <label for="name" class="block text-sm font-medium text-slate-300 mb-2">
+              Item Name
+            </label>
+            <input type="text" id="name" name="name" required
+                   placeholder="e.g. Sour Cream"
+                   class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+          </div>
+
+          <div>
+            <label for="quantity" class="block text-sm font-medium text-slate-300 mb-2">
+              Quantity
+            </label>
+            <input type="text" id="quantity" name="quantity" required
+                   placeholder="e.g. 1 container, 500g, 2 lbs"
+                   class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Location
+            </label>
+            <div class="flex gap-3">
+              <label class="flex-1">
+                <input type="radio" name="location" value="fridge" checked class="peer hidden">
+                <div class="py-3 text-center rounded-xl border-2 border-slate-600 bg-slate-800 cursor-pointer peer-checked:border-cyan-500 peer-checked:bg-cyan-900/30 transition-colors">
+                  🧊 Fridge
+                </div>
+              </label>
+              <label class="flex-1">
+                <input type="radio" name="location" value="freezer" class="peer hidden">
+                <div class="py-3 text-center rounded-xl border-2 border-slate-600 bg-slate-800 cursor-pointer peer-checked:border-cyan-500 peer-checked:bg-cyan-900/30 transition-colors">
+                  ❄️ Freezer
+                </div>
+              </label>
+              <label class="flex-1">
+                <input type="radio" name="location" value="pantry" class="peer hidden">
+                <div class="py-3 text-center rounded-xl border-2 border-slate-600 bg-slate-800 cursor-pointer peer-checked:border-cyan-500 peer-checked:bg-cyan-900/30 transition-colors">
+                  🗄️ Pantry
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div>
+            <label for="expiry" class="block text-sm font-medium text-slate-300 mb-2">
+              Expiry Date
+            </label>
+            <input type="date" id="expiry" name="expiry" required
+                   value="${defaultExpiryStr}"
+                   class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+          </div>
+
+          <div>
+            <label for="added_by" class="block text-sm font-medium text-slate-300 mb-2">
+              Added By
+            </label>
+            <select id="added_by" name="added_by" required
+                    class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+              ${users.map(user => html`
+                <option value="${user.name}">${user.name}</option>
+              `)}
+            </select>
+          </div>
+
+          <button type="submit" 
+                  class="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-xl shadow-lg transition-colors">
+            Add to Inventory
+          </button>
+        </form>
+      </div>
+    </div>
+  `
+}
+
+export const UsersPage = (props: { users: User[] }) => {
+  const { users } = props
+  
+  return html`
+    <div class="font-serif min-h-screen bg-slate-900 text-slate-100">
+      <div class="max-w-md mx-auto px-4 py-6">
+        <header class="flex items-center gap-4 mb-8">
+          <a href="/inventory" class="text-slate-400 hover:text-slate-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </a>
+          <h1 class="text-2xl font-bold text-cyan-400">Users</h1>
+        </header>
+
+        <div class="space-y-3">
+          ${users.map(user => html`
+            <div class="flex items-center gap-4 p-4 bg-slate-800 rounded-xl border border-slate-700">
+              <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                ${user.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <p class="font-medium text-slate-100">${user.name}</p>
+                <p class="text-sm text-slate-400">Joined ${new Date(user.created_at).toLocaleDateString()}</p>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `
+}

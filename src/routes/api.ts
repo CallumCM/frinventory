@@ -74,4 +74,25 @@ api.delete('/inventory/:id', async (c) => {
 	return c.json({ success }, success ? 200 : 404)
 })
 
+// POST endpoint for "Eat" button (form submission to delete item)
+api.post('/eat/:id', async (c) => {
+	const id = c.req.param('id')
+	
+	// Get the item's location before deleting so we can redirect back
+	const item = await c.env.fridge_db
+		.prepare('SELECT location FROM inventory WHERE id = ?')
+		.bind(id)
+		.first() as { location: string } | null
+	
+	const location = item?.location || 'fridge'
+	
+	await c.env.fridge_db
+		.prepare('DELETE FROM inventory WHERE id = ?')
+		.bind(id)
+		.run()
+
+	// Redirect back to the inventory page for that location
+	return c.redirect(`/inventory?location=${location}`)
+})
+
 export default api
