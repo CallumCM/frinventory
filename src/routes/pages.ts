@@ -3,18 +3,9 @@ import type { AppContext } from '../types'
 import { Layout } from '../components/layout'
 import { HomePage, InventoryPage, AddItemPage, UsersPage } from '../components/pages'
 
-// Create a new Hono instance for page routes
-// The <AppContext> generic provides type safety for c.env bindings
 const pages = new Hono<AppContext>()
 
-// Route handlers receive a context object (c) with:
-// - c.req: request object (query params, body, headers, etc.)
-// - c.env: your Cloudflare bindings (D1, KV, etc.)
-// - c.html(): returns HTML response
-// - c.json(): returns JSON response
-// - c.redirect(): redirects to another URL
 pages.get('/', (c) => {
-	// Redirect to inventory page with default location
 	return c.redirect('/inventory?location=fridge')
 })
 
