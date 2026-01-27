@@ -4,8 +4,12 @@ import { cors } from 'hono/cors'
 import type { AppContext } from './types'
 import pages from './routes/pages'
 import api from './routes/api'
+import { installTwind } from './twind.config'
 
 const app = new Hono<AppContext>()
+
+installTwind();
+
 app.use('*', logger())
 app.use('/api/*', cors())
 

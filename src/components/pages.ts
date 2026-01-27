@@ -25,73 +25,36 @@ const getDaysUntilExpiry = (expiryDate: string): number => {
 }
 
 const getExpiryColor = (days: number): string => {
-  if (days <= 0) return 'text-red-500'
-  if (days <= 3) return 'text-orange-400'
-  if (days <= 7) return 'text-yellow-400'
-  return 'text-emerald-400'
+  if (days <= 0) return 'text-lychee-'
+  if (days <= 3) return 'text-lychee-6'
+  if (days <= 7) return 'text-pistachio-2'
+  return 'text-pistachio-6'
 }
 
-const getFoodEmoji = (name: string): string => {
-  const lower = name.toLowerCase()
-  const emojiMap: Record<string, string> = {
-    milk: '🥛', cheese: '🧀', yogurt: '🥛', butter: '🧈',
-    egg: '🥚', eggs: '🥚', chicken: '🍗', beef: '🥩', pork: '🥓',
-    fish: '🐟', salmon: '🐟', shrimp: '🦐',
-    apple: '🍎', banana: '🍌', orange: '🍊', lemon: '🍋',
-    grape: '🍇', strawberry: '🍓', berry: '🫐', melon: '🍈',
-    carrot: '🥕', broccoli: '🥦', lettuce: '🥬', tomato: '🍅',
-    potato: '🥔', onion: '🧅', garlic: '🧄', corn: '🌽',
-    bread: '🍞', rice: '🍚', pasta: '🍝', noodle: '🍜',
-    pizza: '🍕', soup: '🍲', salad: '🥗', sandwich: '🥪',
-    cake: '🍰', 'ice cream': '🍦', chocolate: '🍫', cookie: '🍪',
-    juice: '🧃', soda: '🥤', water: '💧', wine: '🍷', beer: '🍺',
-    cream: '🥛', sour: '🥛', leftovers: '🍱', sauce: '🫙',
-  }
+export const InventoryPage = (props: {
+  items: InventoryItem[],
+  location: 'fridge' | 'freezer' | 'pantry'
+}) => {
+  const { items, location } = props
   
-  for (const [key, emoji] of Object.entries(emojiMap)) {
-    if (lower.includes(key)) return emoji
+  const locationEmoji = {
+    fridge: '🧊',
+    freezer: '❄️',
+    pantry: '🗄️'
   }
-  return '🍽️'
+
+  const tabs = ['fridge', 'freezer', 'pantry'] as const
+  
+  return html`
+    <div class="font-serif min-h-screen bg-infinity-1 text-white pb-24">
+      <header class="text-center py-6">
+        <h1 class="text-3xl font-bold">Frinventory</h1>
+      </header>
+    </div>
+  `;
 }
 
-export const HomePage = () => html`
-  <div class="font-serif min-h-screen bg-slate-900 text-slate-100">
-    <div class="max-w-md mx-auto px-4 py-6">
-      <header class="text-center mb-6">
-        <h1 class="text-3xl font-bold text-cyan-400">Frinventory</h1>
-        <p class="text-slate-400 text-sm mt-1">Track your food, reduce waste</p>
-      </header>
-
-      <div class="flex justify-center mb-6">
-        <a href="/inventory?location=fridge" 
-           class="px-6 py-2 rounded-l-full bg-cyan-600 text-white font-medium border-2 border-cyan-500">
-          Fridge
-        </a>
-        <a href="/inventory?location=freezer"
-           class="px-6 py-2 bg-slate-700 text-slate-300 border-y-2 border-slate-600 hover:bg-slate-600">
-          Freezer
-        </a>
-        <a href="/inventory?location=pantry"
-           class="px-6 py-2 rounded-r-full bg-slate-700 text-slate-300 border-2 border-slate-600 hover:bg-slate-600">
-          Pantry
-        </a>
-      </div>
-
-      <div class="text-center py-16">
-        <p class="text-6xl mb-4">🧊</p>
-        <p class="text-slate-400 text-lg">Your inventory is empty</p>
-        <p class="text-slate-500 text-sm mt-2">Add items to start tracking</p>
-      </div>
-
-      <a href="/add" 
-         class="fixed bottom-6 left-1/2 -translate-x-1/2 px-12 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full shadow-lg shadow-cyan-900/50 transition-colors">
-        Add Item
-      </a>
-    </div>
-  </div>
-`
-
-export const InventoryPage = (props: { 
+export const _InventoryPage = (props: { 
   items: InventoryItem[], 
   location: 'fridge' | 'freezer' | 'pantry' 
 }) => {
@@ -110,7 +73,6 @@ export const InventoryPage = (props: {
       <div class="max-w-md mx-auto px-4 py-6">
         <header class="text-center mb-6">
           <h1 class="text-3xl font-bold text-cyan-400">Frinventory</h1>
-          <p class="text-slate-400 text-sm mt-1">Track your food, reduce waste</p>
         </header>
 
         <div class="flex justify-center mb-6">
@@ -148,7 +110,7 @@ export const InventoryPage = (props: {
               const daysText = days <= 0 ? 'Expired!' : days === 1 ? '1 day' : `${days} days`
               
               return html`
-                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-lg">
+                <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700">
                   <div class="flex items-center gap-1 mb-2 ${expiryColor}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <circle cx="12" cy="12" r="10" stroke-width="2"/>
@@ -177,7 +139,7 @@ export const InventoryPage = (props: {
         `}
 
         <a href="/add" 
-           class="fixed bottom-6 left-1/2 -translate-x-1/2 px-12 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full shadow-lg shadow-cyan-900/50 transition-colors">
+           class="fixed bottom-6 left-1/2 -translate-x-1/2 px-12 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-full transition-colors">
           Add Item
         </a>
       </div>
@@ -273,7 +235,7 @@ export const AddItemPage = (props: { users: User[] }) => {
           </div>
 
           <button type="submit" 
-                  class="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-xl shadow-lg transition-colors">
+                  class="w-full py-4 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-lg rounded-xl transition-colors">
             Add to Inventory
           </button>
         </form>

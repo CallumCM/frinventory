@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import type { AppContext } from '../types'
 import { Layout } from '../components/layout'
-import { HomePage, InventoryPage, AddItemPage, UsersPage } from '../components/pages'
+import { InventoryPage } from '../components/pages'
 
 const pages = new Hono<AppContext>()
 
@@ -27,36 +27,6 @@ pages.get('/inventory', async (c) => {
 		title: `${location.charAt(0).toUpperCase() + location.slice(1)} - Frinventory`, 
 		children: InventoryPage({ items: results as any, location }) 
 	}))
-})
-
-pages.get('/users', async (c) => {
-	const { results } = await c.env.fridge_db.prepare('SELECT * FROM users').all()
-
-	return c.html(Layout({ title: 'Users', children: UsersPage({ users: results as any }) }))
-})
-
-pages.get('/add', async (c) => {
-	const { results: users } = await c.env.fridge_db.prepare('SELECT * FROM users').all()
-
-	return c.html(Layout({ title: 'Add Item', children: AddItemPage({ users: users as any }) }))
-})
-
-pages.post('/add', async (c) => {
-	const formData = await c.req.formData()
-	const name = formData.get('name')
-	const quantity = formData.get('quantity')
-	const location = formData.get('location')
-	const expiry = formData.get('expiry')
-	const added_by = formData.get('added_by')
-
-	await c.env.fridge_db
-		.prepare(
-			'INSERT INTO inventory (name, quantity, location, expiry, added_by) VALUES (?, ?, ?, ?, ?)'
-		)
-		.bind(name, quantity, location, expiry, added_by)
-		.run()
-
-	return c.redirect(`/inventory?location=${location}`)
-})
+});
 
 export default pages
