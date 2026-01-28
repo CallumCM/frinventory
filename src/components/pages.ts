@@ -6,7 +6,6 @@ interface InventoryItem {
   quantity: string
   location: 'fridge' | 'freezer' | 'pantry'
   expiry: string
-  added_by: string
   added_at: string
 }
 
@@ -16,10 +15,9 @@ interface User {
   created_at: string
 }
 
-const getDaysUntilExpiry = (expiryDate: string): number => {
-  const today = new Date()
-  const expiry = new Date(expiryDate)
-  const diffTime = expiry.getTime() - today.getTime()
+const getDaysUntilExpiry = (expiryTime: number): number => {
+  console.log('Expiry time:', expiryTime);
+  const diffTime = expiryTime - Date.now()
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   return diffDays
 }
@@ -36,7 +34,7 @@ export const InventoryPage = (props: {
   location: 'fridge' | 'freezer' | 'pantry'
 }) => {
   const { items, location } = props
-  
+
   const locationEmoji = {
     fridge: '🧊',
     freezer: '❄️',
@@ -44,17 +42,113 @@ export const InventoryPage = (props: {
   }
 
   const tabs = ['fridge', 'freezer', 'pantry'] as const
-  
+
   return html`
-    <div class="font-serif min-h-screen bg-infinity-1 text-white pb-24">
-      <header class="text-center py-6">
-        <h1 class="text-3xl font-bold">Frinventory</h1>
-      </header>
-    </div>
+<script>var foodLocation = "${location}";</script>
+<script type="module" src="/public/script.js"></script>
+<div class="font-serif min-h-screen bg-infinity-1 text-white pb-24">
+
+  <!-- TITLE -->
+  <header class="text-center pt-6 mb-3">
+    <h1 class="text-3xl font-bold">Frinventory</h1>
+  </header>
+
+  <!-- TABS -->
+  <div class="flex justify-center mb-6">
+    ${tabs.map((tab, i) => {
+const isActive = tab === location
+const isFirst = i === 0
+const isLast = i === tabs.length - 1
+const roundedClass = isFirst ? 'rounded-l-full' : isLast ? 'rounded-r-full' : ''
+const activeClass = isActive
+  ? 'bg-infinity-4 text-white border-infinity-5'
+  : 'bg-infinity-2 text-infinity-4 border-infinity-3 hover:bg-infinity-3'
+const borderClass = isFirst ? 'border-2' : isLast ? 'border-2' : 'border-y-2'
+
+return html`
+        <a href="/inventory?location=${tab}" 
+            class="px-5 py-3 font-medium capitalize ${roundedClass} ${activeClass} ${borderClass}">
+          ${tab}
+        </a>
+      `
+})}
+        </div>
+
+        <!-- ADD NEW FOOD -->
+        <div class="text-center mb-12">
+          <button id="open-add-food-modal"
+            class="px-12 py-3 bg-infinity-5 hover:bg-infinity-6 text-white font-bold text-lg rounded-full transition-colors">
+            Add Item
+          </button>
+        </div>
+
+        <!-- ADD NEW FOOD MODAL -->
+        <div id="add-food-modal" class="hidden fixed top-0 left-0 w-full h-full inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div class="bg-infinity-2 rounded-2xl p-6 w-full max-w-md">
+            <h2 class="text-xl font-bold mb-4">Add New Food Item</h2>
+
+            <div class="space-y-4">
+
+              <!-- Name + Quantity -->
+              <input id="food-name" type="text" name="name" placeholder="Name" required
+              class="w-full px-3 py-3 bg-infinity-1 border border-infinity-3 rounded-lg text-white focus:outline-none focus:border-infinity-5">
+              <input id="food-quantity" type="text" name="quantity" placeholder="Quantity" required
+              class="w-full px-3 py-3 bg-infinity-1 border border-infinity-3 rounded-lg text-white focus:outline-none focus:border-infinity-5">
+              
+              <!-- Submit + Cancel Buttons -->
+              <button id="submit-add-food"
+                class="w-full py-3 bg-infinity-5 hover:bg-infinity-6 text-white font-bold rounded-lg transition-colors">
+                Add to Inventory
+              </button>
+              <button type="button" id="close-add-food-modal"
+                class="w-full py-3 bg-lychee-3 hover:bg-lychee-4 text-white font-bold rounded-lg transition-colors">
+                Cancel
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- INVENTORY -->
+        <div class="mx-auto">
+    ${items.length === 0 ? html`
+      <div class="text-center">
+        <p class="text-6xl mb-3">${locationEmoji[location]}</p>
+        <p class="text-infinity-3 text-lg">Your ${location} is empty</p>
+      </div>
+    ` : html`
+      <div class="grid grid-cols-3 gap-3 px-3">
+        ${items.map(item => {
+const days = getDaysUntilExpiry(item.expiry)
+const expiryColor = getExpiryColor(days)
+const daysText = days <= 0 ? 'Expired 🤮' : days === 1 ? '1 day' : `${days} days`
+
+return html`
+            <div class="bg-infinity-6 rounded-2xl p-3 border border-infinity-3">
+              <div class="flex items-center gap-1 mb-3 ${expiryColor}">
+                <span class="text-sm font-medium">${daysText}</span>
+              </div>
+              
+              <p class="font-medium text-white truncate">${item.name}</p>
+              <p class="text-sm text-infinity-3">${item.quantity}</p>
+              
+              <form action="/api/eat/${item.id}" method="POST" class="mt-3">
+                <button type="submit" 
+                        class="w-full py-1.5 bg-infinity-5 hover:bg-infinity-6 text-white text-sm font-medium rounded-lg transition-colors">
+                  Eat
+                </button>
+              </form>
+            </div>
+          `
+})}
+      </div>
+    `}
+  </div>
+</div>
   `;
 }
 
-export const _InventoryPage = (props: { 
+/*export const _InventoryPage = (props: { 
   items: InventoryItem[], 
   location: 'fridge' | 'freezer' | 'pantry' 
 }) => {
@@ -70,7 +164,7 @@ export const _InventoryPage = (props: {
   
   return html`
     <div class="font-serif min-h-screen bg-slate-900 text-slate-100 pb-24">
-      <div class="max-w-md mx-auto px-4 py-6">
+      <div class="max-w-md mx-auto px-3 py-6">
         <header class="text-center mb-6">
           <h1 class="text-3xl font-bold text-cyan-400">Frinventory</h1>
         </header>
@@ -88,7 +182,7 @@ export const _InventoryPage = (props: {
             
             return html`
               <a href="/inventory?location=${tab}" 
-                 class="px-5 py-2 font-medium capitalize ${roundedClass} ${activeClass} ${borderClass}">
+                 class="px-5 py-3 font-medium capitalize ${roundedClass} ${activeClass} ${borderClass}">
                 ${tab}
               </a>
             `
@@ -97,7 +191,7 @@ export const _InventoryPage = (props: {
 
         ${items.length === 0 ? html`
           <div class="text-center py-16">
-            <p class="text-6xl mb-4">${locationEmoji[location]}</p>
+            <p class="text-6xl mb-3">${locationEmoji[location]}</p>
             <p class="text-slate-400 text-lg">Your ${location} is empty</p>
             <p class="text-slate-500 text-sm mt-2">Add items to start tracking</p>
           </div>
@@ -158,7 +252,7 @@ export const AddItemPage = (props: { users: User[] }) => {
   
   return html`
     <div class="font-serif min-h-screen bg-slate-900 text-slate-100">
-      <div class="max-w-md mx-auto px-4 py-6">
+      <div class="max-w-md mx-auto px-3 py-6">
         <header class="flex items-center gap-4 mb-8">
           <a href="/inventory" class="text-slate-400 hover:text-slate-200">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -175,7 +269,7 @@ export const AddItemPage = (props: { users: User[] }) => {
             </label>
             <input type="text" id="name" name="name" required
                    placeholder="e.g. Sour Cream"
-                   class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                   class="w-full px-3 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
           </div>
 
           <div>
@@ -184,7 +278,7 @@ export const AddItemPage = (props: { users: User[] }) => {
             </label>
             <input type="text" id="quantity" name="quantity" required
                    placeholder="e.g. 1 container, 500g, 2 lbs"
-                   class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                   class="w-full px-3 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
           </div>
 
           <div>
@@ -219,19 +313,7 @@ export const AddItemPage = (props: { users: User[] }) => {
             </label>
             <input type="date" id="expiry" name="expiry" required
                    value="${defaultExpiryStr}"
-                   class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
-          </div>
-
-          <div>
-            <label for="added_by" class="block text-sm font-medium text-slate-300 mb-2">
-              Added By
-            </label>
-            <select id="added_by" name="added_by" required
-                    class="w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
-              ${users.map(user => html`
-                <option value="${user.name}">${user.name}</option>
-              `)}
-            </select>
+                   class="w-full px-3 py-3 bg-slate-800 border border-slate-600 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
           </div>
 
           <button type="submit" 
@@ -249,7 +331,7 @@ export const UsersPage = (props: { users: User[] }) => {
   
   return html`
     <div class="font-serif min-h-screen bg-slate-900 text-slate-100">
-      <div class="max-w-md mx-auto px-4 py-6">
+      <div class="max-w-md mx-auto px-3 py-6">
         <header class="flex items-center gap-4 mb-8">
           <a href="/inventory" class="text-slate-400 hover:text-slate-200">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -275,4 +357,4 @@ export const UsersPage = (props: { users: User[] }) => {
       </div>
     </div>
   `
-}
+}*/

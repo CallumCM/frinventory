@@ -13,6 +13,12 @@ installTwind();
 app.use('*', logger())
 app.use('/api/*', cors())
 
+app.get('/public/*', async (c) => {
+  const url = new URL(c.req.url)
+  url.pathname = url.pathname.replace(/^\/public/, '')
+  return c.env.ASSETS.fetch(new Request(url, c.req.raw))
+})
+
 app.route('/', pages)
 app.route('/api', api)
 

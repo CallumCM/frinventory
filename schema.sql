@@ -6,13 +6,13 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- THE frinventory
-CREATE TABLE IF NOT EXISTS inventory (
+DROP TABLE IF EXISTS inventory;
+CREATE TABLE inventory (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   quantity TEXT NOT NULL,
   location TEXT NOT NULL CHECK(location IN ('fridge', 'freezer', 'pantry')),
   expiry TEXT NOT NULL,
-  added_by TEXT NOT NULL,
   added_at TEXT DEFAULT (datetime('now'))
 );
 

@@ -39,17 +39,17 @@ api.get('/users', async (c) => {
 
 api.post('/inventory', async (c) => {
 	const body = await c.req.json()
-	const { name, quantity, location, expiry, added_by } = body
+	const { name, quantity, location, expiry } = body
 
-	if (!name || !quantity || !location || !expiry || !added_by) {
+	if (!name || !quantity || !location || !expiry) {
 		return c.json({ error: 'Missing required fields' }, 400)
 	}
 
 	const { success } = await c.env.fridge_db
 		.prepare(
-			'INSERT INTO inventory (name, quantity, location, expiry, added_by) VALUES (?, ?, ?, ?, ?)'
+			'INSERT INTO inventory (name, quantity, location, expiry) VALUES (?, ?, ?, ?)'
 		)
-		.bind(name, quantity, location, expiry, added_by)
+		.bind(name, quantity, location, expiry)
 		.run()
 
 	return c.json({ success }, success ? 201 : 500)
