@@ -307,6 +307,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Close modal with Escape key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && addFoodModal.style.display === 'flex') {
+    addFoodModal.style.display = 'none';
+  }
+});
+
 openAddFoodModalButton.addEventListener('click', () => {
   addFoodModal.style.display = 'flex';
 

@@ -1,11 +1,11 @@
 {
   "name": "Frinventory",
   "short_name": "Frinventory",
-  "description": "Fridge inventory tracker",
-  "start_url": "/",
+  "description": "Inventory tracker",
+  "start_url": "/inventory?location=fridge",
   "display": "standalone",
-  "background_color": "#fefdfb",
-  "theme_color": "#fefdfb",
+  "background_color": "#131e2a",
+  "theme_color": "#131e2a",
   "orientation": "portrait",
   "icons": [
     {
