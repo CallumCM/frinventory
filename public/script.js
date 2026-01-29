@@ -147,8 +147,7 @@ function selectCustomFood() {
   foodSearchInput.value = '';
   foodDropdown.style.display = 'none';
 
-  // Show custom food fields
-  document.getElementById('custom-food-fields').style.display = 'block';
+  // Show expiry container
   document.getElementById('food-expiry-container').style.display = 'block';
   
   storageWarning.style.display = 'none';
@@ -169,8 +168,11 @@ function selectFood(foodId) {
   foodSearchInput.value = '';
   foodDropdown.style.display = 'none';
 
-  // Hide custom food fields for database foods
-  document.getElementById('custom-food-fields').style.display = 'none';
+  // Pre-fill customization fields with food's data
+  const customEmojiInput = document.getElementById('custom-emoji');
+  const customColorInput = document.getElementById('custom-color');
+  if (customEmojiInput) customEmojiInput.value = selectedFood.emoji || '🍽️';
+  if (customColorInput) customColorInput.value = selectedFood['theme-color'] || selectedFood.theme_color || '#c0c0c0';
   
   // Show expiry container so user can see auto-calculated date and warnings
   document.getElementById('food-expiry-container').style.display = 'block';
@@ -187,37 +189,26 @@ function checkStorageAndSetExpiry() {
 
   console.log('Checking storage for:', selectedFood.name, 'in', foodLocation);
   console.log('Storage data:', selectedFood.storage);
-  const storage = selectedFood.storage[foodLocation];
+  const storage = selectedFood.storage?.[foodLocation];
   console.log('Storage for location:', storage);
   
-  if (!storage) {
-    // No data for this location
-    console.log('No storage data for this location');
-    storageWarning.style.display = 'none';
-    setDefaultExpiry();
-    return;
-  }
+  // Milk don't go in the pantry
+  const isRecommended = storage?.recommended === true;
 
-  if (!storage.recommended) {
-    // Not recommended for this location
+  if (!isRecommended) {
     console.log('Food not recommended for this location!');
     const recommendedLocations = Object.keys(selectedFood.storage)
       .filter(loc => selectedFood.storage[loc].recommended)
-      .join(', ');
+      .join(' or the ');
     
     console.log('Recommended locations:', recommendedLocations);
-    storageWarningText.textContent = `This food is not recommended for ${foodLocation}. Try: ${recommendedLocations}`;
+    storageWarningText.textContent = `It is not recommended to store ${selectedFood.name} in the ${foodLocation}. Please store it in the ${recommendedLocations} instead`;
     console.log('Setting warning display to block');
     console.log('Warning element:', storageWarning);
     storageWarning.style.display = 'block';
     
-    if (storage.expires_after) {
-      setExpiryDate(storage.expires_after);
-    } else {
-      setDefaultExpiry();
-    }
+    setUnsafeExpiry();
   } else {
-    // Recommended location
     storageWarning.style.display = 'none';
     
     if (storage.expires_after) {
@@ -244,6 +235,18 @@ function setDefaultExpiry() {
   foodExpiryInput.value = expiryDate.toISOString().split('T')[0];
   
   expiryInfo.textContent = 'Default: 7 days';
+  expiryInfo.style.display = 'block';
+}
+
+function setUnsafeExpiry() {
+  if (!foodExpiryInput || !expiryInfo) return;
+
+  // Expires in 4 hours by default due to unsafe storage
+  const expiryDate = new Date();
+  expiryDate.setHours(expiryDate.getHours() + 4);
+  foodExpiryInput.value = expiryDate.toISOString().split('T')[0];
+  
+  expiryInfo.textContent = 'Unsafely Stored Food Defaults to 4 hours';
   expiryInfo.style.display = 'block';
 }
 

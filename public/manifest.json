@@ -1,7 +1,7 @@
 {
   "name": "Frinventory",
   "short_name": "Frinventory",
-  "description": "Fridge inventory tracker for roommates",
+  "description": "Fridge inventory tracker",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fefdfb",
