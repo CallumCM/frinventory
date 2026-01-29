@@ -9,7 +9,6 @@ interface InventoryItem {
   added_at: string
   emoji?: string
   theme_color?: string
-  food_id?: number
 }
 
 interface User {
@@ -54,23 +53,23 @@ export const InventoryPage = (props: {
   <!-- TABS -->
   <div class="flex justify-center mb-6">
     ${tabs.map((tab, i) => {
-const isActive = tab === location
-const isFirst = i === 0
-const isLast = i === tabs.length - 1
-const roundedClass = isFirst ? 'rounded-l-full' : isLast ? 'rounded-r-full' : ''
-const activeClass = isActive
-  ? 'bg-infinity-4 text-white border-infinity-5'
-  : 'bg-infinity-2 text-infinity-4 border-infinity-3 hover:bg-infinity-3'
-const borderClass = isFirst ? 'border-2' : isLast ? 'border-2' : 'border-y-2'
+    const isActive = tab === location
+    const isFirst = i === 0
+    const isLast = i === tabs.length - 1
+    const roundedClass = isFirst ? 'rounded-l-full' : isLast ? 'rounded-r-full' : ''
+    const activeClass = isActive
+      ? 'bg-infinity-4 text-white border-infinity-5'
+      : 'bg-infinity-2 text-infinity-4 border-infinity-3 hover:bg-infinity-3'
+    const borderClass = isFirst ? 'border-2' : isLast ? 'border-2' : 'border-y-2'
 
-return html`
+    return html`
         <a href="/inventory?location=${tab}" 
             class="px-5 py-3 font-medium capitalize ${roundedClass} ${activeClass} ${borderClass}">
           ${tab}
         </a>
       `
-})}
-        </div>
+  })}
+  </div>
 
         <!-- ADD NEW FOOD -->
         <div class="text-center mb-12">
@@ -83,6 +82,26 @@ return html`
         <!-- ADD NEW FOOD MODAL -->
         <div id="add-food-modal" class="hidden fixed top-0 left-0 w-full h-full inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[9999]">
           <div class="bg-infinity-2 rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div class="flex justify-center mb-6">
+                ${tabs.map((tab, i) => {
+    const isActive = tab === location
+    const isFirst = i === 0
+    const isLast = i === tabs.length - 1
+    const roundedClass = isFirst ? 'rounded-l-full' : isLast ? 'rounded-r-full' : ''
+    const activeClass = isActive
+      ? 'bg-infinity-4 text-white border-infinity-5'
+      : 'bg-infinity-2 text-infinity-4 border-infinity-3 hover:bg-infinity-3'
+    const borderClass = isFirst ? 'border-2' : isLast ? 'border-2' : 'border-y-2'
+
+    return html`
+                        <button type="button" data-location="${tab}"
+                            class="modal-tab-button px-5 py-3 font-medium capitalize ${roundedClass} ${activeClass} ${borderClass}">
+                          ${tab}
+                        </button>
+                      `
+  })}
+              </div>
+
             <h2 class="text-xl font-bold mb-4">Add New Food Item</h2>
 
             <div class="space-y-4">
@@ -91,7 +110,7 @@ return html`
               <div class="relative">
                 <input id="food-search" type="text" placeholder="Search for food..." autocomplete="off"
                   class="font-serif w-full px-3 py-3 bg-infinity-1 border border-infinity-3 rounded-lg text-white focus:outline-none focus:border-infinity-5">
-                <div id="food-dropdown" class="font-serif hidden absolute z-50 w-full mt-1 max-h-60 overflow-y-auto bg-infinity-1 border border-infinity-3 rounded-lg shadow-lg">
+                <div id="food-dropdown" class="font-serif hidden absolute z-50 w-full mt-1 p-3 max-h-60 overflow-y-auto bg-infinity-1 border border-infinity-3 rounded-lg shadow-lg">
                 </div>
               </div>
               <div id="selected-food-display" class="hidden p-3 bg-infinity-3 rounded-lg">
@@ -177,7 +196,7 @@ return html`
         </div>
 
         <!-- INVENTORY -->
-        <div class="mx-auto">
+        <div class="mx-auto max-w-xl md:max-w-5xl">
     ${items.length === 0 ? html`
       <div class="text-center">
         <p class="text-6xl mb-3">${locationEmoji[location]}</p>
@@ -186,56 +205,52 @@ return html`
     ` : html`
       <div class="grid grid-cols-2 md:grid-cols-3 gap-3 px-3">
         ${items.map(item => {
-const days = getDaysUntilExpiry(item.expiry)
-let daysText = '';
-let expiryColor = '';
+    const days = getDaysUntilExpiry(item.expiry)
+    let daysText = '';
+    let expiryColor = '';
+    let expiryBgColor = 'black';
 
-/*
-const getExpiryColor = (days: number): string => {
-  if (days <= 0) return 'text-lychee-'
-  if (days <= 3) return 'text-lychee-6'
-  if (days <= 7) return 'text-pistachio-4'
-  return 'text-pistachio-6'
-}
-*/
+    if (days > 365) {
+      const years = Math.floor(days / 365);
+      daysText = years === 1 ? '1 year' : `${years} years`;
+      expiryColor = 'text-pistachio-6';
 
-if (days > 365) {
-  const years = Math.floor(days / 365);
-  daysText = years === 1 ? '1 year' : `${years} years`;
-  expiryColor = 'text-pistachio-6';
+    } else if (days > 30) {
+      const months = Math.floor(days / 30);
+      daysText = months === 1 ? '1 month' : `${months} months`;
+      expiryColor = 'text-pistachio-6';
+    } else if (days >= 7) {
+      const weeks = Math.floor(days / 7);
+      daysText = weeks === 1 ? '1 week' : `${weeks} weeks and ${days % 7} days`;
+      expiryColor = 'text-pistachio-5';
+    } else if (days > 1) {
+      daysText = `${days} days`;
+      expiryColor = 'text-pistachio-5';
+      expiryBgColor = 'warning-pepper-dark';
+    } else if (days > 0) {
+      daysText = 'Tomorrow';
+      expiryColor = 'text-warning-pepper-light';
+      expiryBgColor = 'warning-pepper-dark';
+    } else if (days === 0) {
+      daysText = 'Expires today';
+      expiryColor = 'text-lychee-3';
+      expiryBgColor = 'lychee-6';
+    } else {
+      daysText = `${Math.abs(days)} days ago`;
+      expiryColor = 'text-lychee-2';
+      expiryBgColor = 'lychee-5';
+    }
 
-} else if (days > 30) {
-  const months = Math.floor(days / 30);
-  daysText = months === 1 ? '1 month' : `${months} months`;
-  expiryColor = 'text-pistachio-6';
-} else if (days >= 7) {
-  const weeks = Math.floor(days / 7);
-  daysText = weeks === 1 ? '1 week' : `${weeks} weeks and ${days % 7} days`;
-  expiryColor = 'text-pistachio-5';
-} else if (days > 1) {
-  daysText = `${days} days`;
-  expiryColor = 'text-pistachio-4';
-} else if (days > 0) {
-  daysText = 'Tomorrow';
-  expiryColor = 'text-lychee-6';
-} else if (days === 0) {
-  daysText = 'Expires today';
-  expiryColor = 'text-lychee-4';
-} else {
-  daysText = `${Math.abs(days)} days ago`;
-  expiryColor = 'text-lychee-3';
-}
+    const emoji = item.emoji || '🍽️'
+    const themeColor = item.theme_color || '#c0c0c0'
 
-const emoji = item.emoji || '🍽️'
-const themeColor = item.theme_color || '#c0c0c0'
-
-return html`
+    return html`
             <div class="rounded-2xl p-3 border border-white border-opacity-20 relative overflow-hidden" style="background-color: ${themeColor}">
               
               <div class="relative z-10">
                 <div class="flex items-center justify-between mb-2">
-                  <div class="flex items-center gap-1 px-2 py-1 rounded ${expiryColor} bg-black bg-opacity-60">
-                    <span class="text-sm font-medium">${daysText}</span>
+                  <div class="flex items-center gap-1 px-2 py-1 rounded ${expiryColor} bg-${expiryBgColor} bg-opacity-60">
+                    <span class="text-sm font-bold">${daysText}</span>
                   </div>
                   <span class="text-2xl">${emoji}</span>
                 </div>
@@ -258,7 +273,7 @@ return html`
               </div>
             </div>
           `
-})}
+  })}
       </div>
     `}
   </div>

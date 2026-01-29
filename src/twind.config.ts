@@ -27,6 +27,8 @@ function installTwind() {
           2: "#273c2c",
           1: "#0b110d"
         },
+        "warning-pepper-light": "#f4d032",
+        "warning-pepper-dark": "#53451d",
         lychee: {
           6: "#e695a2",
           5: "#bb7984",

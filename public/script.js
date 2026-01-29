@@ -98,16 +98,16 @@ if (foodSearchInput && typeof foodDatabase !== 'undefined') {
     }
 
     foodDropdown.innerHTML = `
-      <div class="food-option px-4 py-2 hover:bg-infinity-3 cursor-pointer border-b border-infinity-4" data-food-id="custom">
-        <span class="text-xl mr-2">✏️</span>
-        <span class="font-medium">Custom Food</span>
-        <span class="text-xs text-infinity-4 ml-1">- Create your own</span>
+      <div class="food-option px-4 py-2 hover:bg-infinity-3 cursor-pointer border-b border-infinity-4" data-food-key="custom">
+        <span class="cursor-pointer text-xl mr-2">✏️</span>
+        <span class="cursor-pointer font-medium">Custom Food</span>
+        <span class="cursor-pointer text-xs text-infinity-4 ml-1">- Create your own</span>
       </div>
     ` + matches.map(food => `
-    <div class="food-option px-4 py-2 hover:bg-infinity-3 cursor-pointer border-b border-infinity-4" data-food-id="${food.id}">
-      <span class="text-xl mr-2">${food.emoji}</span>
-      <span class="font-medium">${food.name}</span>
-      ${food.subtitle ? `<span class="text-xs text-infinity-4 ml-1">- ${food.subtitle}</span>` : ''}
+    <div class="food-option px-4 py-2 hover:bg-infinity-3 cursor-pointer border-b border-infinity-4" data-food-key="${food.name}|||${food.subtitle || ''}">
+      <span class="cursor-pointer text-xl mr-2">${food.emoji}</span>
+      <span class="cursor-pointer font-medium">${food.name}</span>
+      ${food.subtitle ? `<span class="cursor-pointer text-xs text-infinity-4 ml-1">- ${food.subtitle}</span>` : ''}
     </div>
   `).join('');
 
@@ -117,17 +117,17 @@ if (foodSearchInput && typeof foodDatabase !== 'undefined') {
   // Add click handlers to options
   document.querySelectorAll('.food-option').forEach(option => {
     option.addEventListener('click', () => {
-      const foodId = option.getAttribute('data-food-id');
-      if (foodId === 'custom') {
+      const foodKey = option.getAttribute('data-food-key');
+      if (foodKey === 'custom') {
         selectCustomFood();
       } else {
-        selectFood(parseInt(foodId));
+        selectFood(foodKey);
       }
     });
   });
   });
 
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside since we fancy like that
   document.addEventListener('click', (e) => {
     if (!foodSearchInput.contains(e.target) && !foodDropdown.contains(e.target)) {
       foodDropdown.style.display = 'none';
@@ -138,7 +138,6 @@ if (foodSearchInput && typeof foodDatabase !== 'undefined') {
 function selectCustomFood() {
   selectedFood = { custom: true };
   
-  // Update display
   selectedFoodDisplay.style.display = 'block';
   selectedFoodEmoji.textContent = '✏️';
   selectedFoodName.textContent = 'Custom Food';
@@ -147,7 +146,6 @@ function selectCustomFood() {
   foodSearchInput.value = '';
   foodDropdown.style.display = 'none';
 
-  // Show expiry container
   document.getElementById('food-expiry-container').style.display = 'block';
   
   storageWarning.style.display = 'none';
@@ -155,11 +153,11 @@ function selectCustomFood() {
   setDefaultExpiry();
 }
 
-function selectFood(foodId) {
-  selectedFood = foodDatabase.find(f => f.id === foodId);
+function selectFood(foodKey) {
+  const [name, subtitle] = foodKey.split('|||');
+  selectedFood = foodDatabase.find(f => f.name === name && (f.subtitle || '') === subtitle);
   if (!selectedFood) return;
 
-  // Update display
   selectedFoodEmoji.textContent = selectedFood.emoji;
   selectedFoodName.textContent = selectedFood.name;
   selectedFoodSubtitle.textContent = selectedFood.subtitle || '';
@@ -168,19 +166,16 @@ function selectFood(foodId) {
   foodSearchInput.value = '';
   foodDropdown.style.display = 'none';
 
-  // Pre-fill customization fields with food's data
+  // Pre-fill customization fields
   const customEmojiInput = document.getElementById('custom-emoji');
   const customColorInput = document.getElementById('custom-color');
   if (customEmojiInput) customEmojiInput.value = selectedFood.emoji || '🍽️';
   if (customColorInput) customColorInput.value = selectedFood['theme-color'] || selectedFood.theme_color || '#c0c0c0';
   
-  // Show expiry container so user can see auto-calculated date and warnings
   document.getElementById('food-expiry-container').style.display = 'block';
 
-  // Clear custom name field - user can override if they want
   foodNameInput.value = '';
 
-  // Check storage location and set expiry
   checkStorageAndSetExpiry();
 }
 
@@ -241,12 +236,11 @@ function setDefaultExpiry() {
 function setUnsafeExpiry() {
   if (!foodExpiryInput || !expiryInfo) return;
 
-  // Expires in 4 hours by default due to unsafe storage
+  // Expires "today" due to unsafe storage
   const expiryDate = new Date();
-  expiryDate.setHours(expiryDate.getHours() + 4);
   foodExpiryInput.value = expiryDate.toISOString().split('T')[0];
   
-  expiryInfo.textContent = 'Unsafely Stored Food Defaults to 4 hours';
+  expiryInfo.textContent = 'Unsafely stored food defaults to expiring today';
   expiryInfo.style.display = 'block';
 }
 
@@ -261,9 +255,61 @@ if (clearFoodSelectionButton) {
   });
 }
 
-// Add Food Modal
+// Restore form state if navigated from modal tab change
+window.addEventListener('DOMContentLoaded', () => {
+  const savedState = sessionStorage.getItem('addFoodFormState');
+  if (savedState) {
+    try {
+      const formState = JSON.parse(savedState);
+      
+      // NOW we can clear the saved state
+      sessionStorage.removeItem('addFoodFormState');
+      
+      // Open modal
+      addFoodModal.style.display = 'flex';
+      
+      // Restore stuff
+      selectedFood = formState.selectedFood;
+      foodNameInput.value = formState.customName || '';
+      document.getElementById('food-quantity').value = formState.quantity || '';
+      foodSearchInput.value = formState.searchValue || '';
+      document.getElementById('custom-emoji').value = formState.customEmoji || '';
+      document.getElementById('custom-color').value = formState.customColor || '#c0c0c0';
+      foodExpiryInput.value = formState.expiry || '';
+      
+      selectedFoodDisplay.style.display = formState.selectedFoodDisplayVisible ? 'block' : 'none';
+      storageWarning.style.display = formState.storageWarningVisible ? 'block' : 'none';
+      storageWarningText.textContent = formState.storageWarningText || '';
+      expiryInfo.style.display = formState.expiryInfoVisible ? 'block' : 'none';
+      expiryInfo.textContent = formState.expiryInfoText || '';
+      document.getElementById('food-expiry-container').style.display = formState.expiryContainerVisible ? 'block' : 'none';
+      
+      if (formState.selectedFoodDisplayVisible && formState.selectedFood) {
+        if (formState.selectedFood.custom) {
+          selectedFoodEmoji.textContent = '✏️';
+          selectedFoodName.textContent = 'Custom Food';
+          selectedFoodSubtitle.textContent = 'Enter details below';
+        } else {
+          selectedFoodEmoji.textContent = formState.selectedFood.emoji || '🍽️';
+          selectedFoodName.textContent = formState.selectedFood.name || '';
+          selectedFoodSubtitle.textContent = formState.selectedFood.subtitle || '';
+        }
+      }
+      
+      foodDropdown.style.display = 'none';
+
+      // We must re-grab the expiration info based on the food's current location.
+      checkStorageAndSetExpiry();
+    } catch (e) {
+      console.error('Error restoring form state:', e);
+      sessionStorage.removeItem('addFoodFormState');
+    }
+  }
+});
+
 openAddFoodModalButton.addEventListener('click', () => {
   addFoodModal.style.display = 'flex';
+
   // Reset form
   selectedFood = null;
   selectedFoodDisplay.style.display = 'none';
@@ -273,19 +319,50 @@ openAddFoodModalButton.addEventListener('click', () => {
   document.getElementById('food-quantity').value = '';
   foodSearchInput.value = '';
   
-  // Hide custom fields by default
-  document.getElementById('custom-food-fields').style.display = 'none';
+  // Reset override fields
+  document.getElementById('custom-emoji').value = '';
+  document.getElementById('custom-color').value = '#c0c0c0';
   document.getElementById('food-expiry-container').style.display = 'none';
   
   setDefaultExpiry();
   
-  // Show dropdown with initial message
+  // Starting dropdown message
   foodDropdown.innerHTML = `
     <div class="px-4 py-3 text-center text-infinity-4 text-sm">
       Start typing to search for foods in the database...
     </div>
   `;
   foodDropdown.style.display = 'block';
+});
+
+// Handle modal tab switching
+document.querySelectorAll('.modal-tab-button').forEach(button => {
+  button.addEventListener('click', () => {
+    const newLocation = button.getAttribute('data-location');
+    
+    // Save current form state
+    const formState = {
+      selectedFood: selectedFood,
+      customName: foodNameInput.value,
+      quantity: document.getElementById('food-quantity').value,
+      searchValue: foodSearchInput.value,
+      customEmoji: document.getElementById('custom-emoji').value,
+      customColor: document.getElementById('custom-color').value,
+      expiry: foodExpiryInput.value,
+      selectedFoodDisplayVisible: selectedFoodDisplay.style.display !== 'none',
+      storageWarningVisible: storageWarning.style.display !== 'none',
+      storageWarningText: storageWarningText.textContent,
+      expiryInfoVisible: expiryInfo.style.display !== 'none',
+      expiryInfoText: expiryInfo.textContent,
+      expiryContainerVisible: document.getElementById('food-expiry-container').style.display !== 'none'
+    };
+    
+    // Store in sessionStorage
+    sessionStorage.setItem('addFoodFormState', JSON.stringify(formState));
+    
+    // Navigate to the new location
+    window.location.href = `/inventory?location=${newLocation}`;
+  });
 });
 
 closeAddFoodModalButton.addEventListener('click', () => {
@@ -297,7 +374,7 @@ addFoodModalButton.addEventListener('click', () => {
   const quantity = document.getElementById('food-quantity').value;
   const expiryDateStr = foodExpiryInput.value;
 
-  // Determine food name: custom name if provided, otherwise from selectedFood
+  // Name can be custom or from database
   let name = customName;
   if (!name && selectedFood) {
     name = selectedFood.custom ? 'Unnamed Food' : selectedFood.name + (selectedFood.subtitle ? ` (${selectedFood.subtitle})` : '');
@@ -308,7 +385,6 @@ addFoodModalButton.addEventListener('click', () => {
     return;
   }
 
-  // Convert date string to timestamp
   const expiry = new Date(expiryDateStr).getTime();
 
   const payload = { 
@@ -318,16 +394,24 @@ addFoodModalButton.addEventListener('click', () => {
     expiry 
   };
 
-  // Add food metadata if a food was selected
+  const customEmoji = document.getElementById('custom-emoji').value.trim();
+  const customColor = document.getElementById('custom-color').value;
+  
   if (selectedFood && selectedFood.custom) {
-    // Custom food - get values from custom fields
-    payload.emoji = document.getElementById('custom-emoji').value || '🍽️';
-    payload.theme_color = document.getElementById('custom-color').value || '#c0c0c0';
+
+    // Custom food
+    payload.emoji = customEmoji || '🍽️';
+    payload.theme_color = customColor || '#c0c0c0';
   } else if (selectedFood) {
-    // Database food
-    payload.emoji = selectedFood.emoji;
-    payload.theme_color = selectedFood['theme-color'];
-    payload.food_id = selectedFood.id;
+
+    // Food from the database
+    payload.emoji = customEmoji || selectedFood.emoji;
+    payload.theme_color = customColor || selectedFood['theme-color'];
+  } else {
+
+    // Default
+    payload.emoji = customEmoji || '🍽️';
+    payload.theme_color = customColor || '#c0c0c0';
   }
 
   fetch('/api/inventory', {

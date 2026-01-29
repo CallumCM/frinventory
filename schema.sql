@@ -15,8 +15,7 @@ CREATE TABLE inventory (
   expiry TEXT NOT NULL,
   added_at TEXT DEFAULT (datetime('now')),
   emoji TEXT,
-  theme_color TEXT,
-  food_id INTEGER
+  theme_color TEXT
 );
 
 -- Us
