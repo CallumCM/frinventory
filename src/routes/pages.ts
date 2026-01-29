@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import type { AppContext } from '../types'
 import { Layout } from '../components/layout'
 import { InventoryPage } from '../components/pages'
+import foodData from '../../public/foods.json'
 
 const pages = new Hono<AppContext>()
 
@@ -25,7 +26,7 @@ pages.get('/inventory', async (c) => {
 
 	return c.html(Layout({ 
 		title: `${location.charAt(0).toUpperCase() + location.slice(1)} - Frinventory`, 
-		children: InventoryPage({ items: results as any, location }) 
+		children: InventoryPage({ items: results as any, location, foodData }) 
 	}))
 });
 
