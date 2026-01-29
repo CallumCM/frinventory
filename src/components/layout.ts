@@ -10,7 +10,7 @@ export const Layout = (props: { title: string; children: any }) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Frinventory - ${props.title}</title>
   <meta name="theme-color" content="#131e2a">
-  <link rel="icon" href="/public/icons/ios/icon-192.png" />
+  <link rel="icon" href="/public/icons/ios/192.png" />
   <link rel="manifest" href="/public/manifest.json" />
 </head>
 <body>

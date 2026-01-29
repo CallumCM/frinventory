@@ -1,8 +1,6 @@
-const CACHE_NAME = 'frinventory-v1';
+const CACHE_NAME = 'frinventory-v2';
 const DEV_MODE = false;
 const urlsToCache = [
-  '/public/foods.json',
-  '/manifest.json',
 ];
 
 self.addEventListener('install', event => {
